@@ -3,166 +3,346 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Relatório de Auditoria Fiscal TVDE</title>
+    <title>Relatório de Auditoria Fiscal TVDE (VDC)</title>
     <style>
-        body { font-family: Arial, sans-serif; margin: 20px; background-color: #f4f4f9; color: #333; }
-        .container { max-width: 950px; margin: 0 auto; background-color: #fff; padding: 30px; box-shadow: 0 0 15px rgba(0,0,0,0.1); border-radius: 8px; }
-        h1, h2, h3 { text-align: center; }
-        #filenameTitle { display: block; text-align: center; font-size: 1em; font-weight: bold; color: #007bff; margin-bottom: 25px; padding: 12px; border: 1px dashed #007bff; background-color: #e6f7ff; border-radius: 4px; }
-        .grid-row { display: flex; gap: 20px; margin-bottom: 15px; }
-        .input-group { flex: 1; display: flex; flex-direction: column; }
-        label { font-size: 0.85em; font-weight: bold; margin-bottom: 4px; }
-        input, select { padding: 8px; border: 1px solid #ccc; border-radius: 4px; font-size: 0.95em; }
-        .columns-container { display: flex; gap: 30px; margin-top: 20px; }
-        .column { flex: 1; padding: 20px; border: 1px solid #ddd; border-radius: 6px; background-color: #fcfcfc; }
-        .result-group { margin-top: 15px; padding: 12px; background-color: #f0f0f0; border-radius: 4px; border-left: 4px solid #007bff; }
-        .result-group strong { display: block; font-size: 1.1em; color: #000; }
-        .auditoria-section { margin-top: 30px; padding: 25px; border: 2px solid #a33; background-color: #ffeaea; border-radius: 8px; }
-        .discrepancy-box { font-size: 1.5em; font-weight: bold; color: #d9534f; margin: 15px 0; padding: 20px; border: 2px dashed #d9534f; background-color: #fff; text-align: center; }
-        .digital-proof { margin: 20px 0; padding: 15px; border: 1px solid #007bff; background-color: #f0f8ff; font-family: monospace; font-size: 0.85em; }
-        .button-container { display: flex; gap: 15px; margin-top: 30px; }
-        .btn { flex: 1; padding: 15px; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; font-size: 1em; }
-        .btn-calc { background-color: #28a745; color: white; }
-        .btn-print { background-color: #007bff; color: white; }
-        
-        .print-only { display: none; }
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 25px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            border-radius: 8px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: #333;
+        }
+        h0-filename {
+            display: block;
+            text-align: center;
+            font-size: 1.1em;
+            font-weight: bold;
+            color: #007bff;
+            margin-bottom: 25px;
+            padding: 10px;
+            border: 1px dashed #007bff;
+            background-color: #e6f7ff;
+            border-radius: 4px;
+        }
+        h2 {
+            font-size: 1.1em;
+            margin-top: 5px;
+            margin-bottom: 20px;
+        }
+        hr {
+            border: 0;
+            height: 1px;
+            background: #ccc;
+            margin: 20px 0;
+        }
+        .header-info, .auth-info, .company-info {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            font-weight: bold;
+            gap: 20px;
+        }
+        .header-info > div, .auth-info > div, .company-info > div {
+            flex: 1;
+        }
+        .columns-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 30px;
+            margin-top: 30px;
+        }
+        .column {
+            flex: 0 0 48%;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background-color: #ffffff;
+        }
+        .column h3 {
+            text-align: center;
+            color: #444;
+            border-bottom: 2px solid #ddd;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+            font-size: 1.2em;
+        }
+        .input-group, .result-group {
+            margin-bottom: 15px;
+        }
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+        .input-group input, .input-group select {
+            width: 100%;
+            padding: 10px;
+            box-sizing: border-box;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+        }
+        .result-group {
+            padding: 15px;
+            border-top: 1px solid #ccc;
+            margin-top: 15px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+        .result-group strong {
+            font-weight: bold;
+            display: block;
+            margin-top: 5px;
+            font-size: 1.1em;
+        }
+        .auditoria-section {
+            margin-top: 40px;
+            padding: 25px;
+            border: 2px solid #a33;
+            background-color: #ffeaea;
+            border-radius: 8px;
+        }
+        .discrepancy {
+            font-size: 1.4em;
+            font-weight: bold;
+            color: #d9534f;
+            margin: 15px 0;
+            padding: 15px;
+            border: 1px dashed #d9534f;
+            background-color: #fdd;
+            text-align: center;
+            border-radius: 4px;
+        }
+        .digital-proof-section {
+            margin-top: 30px;
+            padding: 20px;
+            border: 2px solid #007bff;
+            background-color: #e6f7ff;
+            border-radius: 8px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        .action-button {
+            flex: 1;
+            padding: 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1.1em;
+            cursor: pointer;
+        }
+        .action-button.calculate { background-color: #28a745; }
 
         @media print {
-            .button-container, input, select { display: none !important; }
-            .print-only { display: block !important; border-bottom: 1px solid #eee; padding: 2px 0; min-height: 1.2em; }
-            .container { box-shadow: none; width: 100%; max-width: 100%; margin: 0; padding: 10px; }
+            .button-container { display: none; }
+            body { background-color: #fff; }
             .columns-container { display: block; }
-            .column { width: 100%; margin-bottom: 20px; page-break-inside: avoid; }
-            .auditoria-section { page-break-inside: avoid; }
-            body { background: white; }
+            .column { width: 100%; margin-bottom: 20px; }
+            input, select { display: none; }
+            span { display: inline-block !important; font-weight: bold; }
+            .signature-box { border: 1px solid #000; height: 80px; }
         }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Relatório de Auditoria Fiscal TVDE</h1>
-    <div id="filenameTitle">NOME DO FICHEIRO: AGUARDANDO DADOS...</div>
-
-    <div class="grid-row">
-        <div class="input-group">
-            <label>Plataforma:</label>
-            <select id="nomeEmpresa">
-                <option value="UBER">Uber</option>
-                <option value="BOLT">Bolt</option>
-                <option value="OUTRA">Outra</option>
-            </select>
-            <span id="nomeEmpresaPrint" class="print-only"></span>
-        </div>
-        <div class="input-group">
-            <label>NIPC Sede Estrangeira:</label>
-            <input type="text" id="nifEmpresa" placeholder="Ex: 505505858">
-            <span id="nifEmpresaPrint" class="print-only"></span>
-        </div>
-        <div class="input-group">
-            <label>ID Amostra/Processo:</label>
-            <input type="text" id="idProcesso" placeholder="Ex: ID1234">
-            <span id="idProcessoPrint" class="print-only"></span>
-        </div>
-    </div>
-
-    <div class="grid-row">
-        <div class="input-group">
-            <label>Mês:</label>
-            <input type="text" id="mes" placeholder="Ex: JAN">
-            <span id="mesPrint" class="print-only"></span>
-        </div>
-        <div class="input-group">
-            <label>Ano:</label>
-            <input type="text" id="ano" placeholder="2025">
-            <span id="anoPrint" class="print-only"></span>
-        </div>
-        <div class="input-group">
-            <label>Autor:</label>
-            <input type="text" id="autor" value="Eduardo">
-            <span id="autorPrint" class="print-only"></span>
-        </div>
-    </div>
-
-    <div class="digital-proof">
-        <label>HASH SHA-256 (Ficheiro Original):</label>
-        <input type="text" id="hashOriginal" style="width: 100%; font-family: monospace;" placeholder="Insira o Hash para garantir validade jurídica">
-        <span id="hashOriginalPrint" class="print-only" style="word-break: break-all;"></span>
-    </div>
-
-    <div class="columns-container">
-        <div class="column">
-            <h3>Dados Operacionais (APP)</h3>
+    <div class="container" id="printableArea">
+        <h1>Relatório de Auditoria Fiscal TVDE (VDC)</h1>
+        <h0-filename id="filenameTitle">NOME DO FICHEIRO: AAAA_MM_PLATAFORMA_ID_ANALISE.pdf</h0-filename>
+        
+        <div class="company-info">
             <div class="input-group">
-                <label>Comissão da Plataforma (Retida) (€):</label>
-                <input type="text" id="comissaoRetida" class="calc-trigger" value="0.00">
+                <label>Plataforma:</label>
+                <select id="nomeEmpresa">
+                    <option value="UBER">Uber</option>
+                    <option value="BOLT">Bolt</option>
+                </select>
+                <span id="nomeEmpresaPrint" style="display:none"></span>
             </div>
-            <div class="input-group" style="margin-top:10px;">
-                <label>Taxas de Reserva / Outras Deduções (€):</label>
-                <input type="text" id="taxasDeducoes" class="calc-trigger" value="0.00">
+            <div class="input-group">
+                <label>NIPC Sede Estrangeira:</label>
+                <input type="text" id="nifEmpresa" value="NL852071248B01">
+                <span id="nifEmpresaPrint" style="display:none"></span>
             </div>
-            <div class="input-group" style="margin-top:10px; background: #e6f7ff; padding: 5px;">
-                <label>Ganhos Líquidos (Apurado APP) (€):</label>
-                <input type="text" id="ganhosLiquidosInput" value="0.00">
-                <span id="ganhosLiquidosPrint" class="print-only"></span>
+        </div>
+
+        <div class="header-info">
+            <div class="input-group">
+                <label>ID Amostra:</label>
+                <input type="text" id="idProcesso" placeholder="Ex: ID1234">
+                <span id="idProcessoPrint" style="display:none"></span>
             </div>
-            
+            <div class="input-group">
+                <label>Mês:</label>
+                <input type="text" id="mes" placeholder="JAN">
+                <span id="mesPrint" style="display:none"></span>
+            </div>
+            <div class="input-group">
+                <label>Ano:</label>
+                <input type="number" id="ano" value="2025">
+                <span id="anoPrint" style="display:none"></span>
+            </div>
+        </div>
+
+        <div class="digital-proof-section">
+            <h3>3. Autenticação Digital (Cadeia de Custódia)</h3>
+            <div class="input-group">
+                <label>Hash SHA-256 do Ficheiro Original:</label>
+                <input type="text" id="hashOriginal" style="font-family: monospace;" placeholder="Cole aqui o Hash">
+                <span id="hashOriginalPrint" style="display:none; word-break: break-all;"></span>
+            </div>
+        </div>
+
+        <div class="columns-container">
+            <div class="column">
+                <h3>4. Ganhos na APP (Operacional)</h3>
+                <div class="input-group">
+                    <label>Comissão Retida (€):</label>
+                    <input type="number" id="comissaoPlataformaOperacionais" value="400" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>Taxas de Reserva (€):</label>
+                    <input type="number" id="taxasReservaDeducoes" value="20.74" step="0.01">
+                </div>
+                <div class="input-group">
+                    <label>Ganhos Líquidos Apurados (€):</label>
+                    <input type="number" id="ganhosLiquidosInput" value="968.02" step="0.01">
+                    <span id="ganhosLiquidosPrint" style="display:none"></span>
+                </div>
+                <div class="result-group">
+                    <label>Base Tributável Operacional (BTOR):</label>
+                    <strong id="btOperacionalResultado">0.00 €</strong>
+                    <input type="hidden" id="baseTributavelOperacional" value="0">
+                </div>
+            </div>
+
+            <div class="column">
+                <h3>5. Fatura Emitida (Fiscal)</h3>
+                <div class="input-group">
+                    <label>Base Tributável Faturada (BTF) (€):</label>
+                    <input type="number" id="baseTributavelFaturada" value="0" step="0.01">
+                </div>
+                <div class="result-group" style="background-color: #fffbe6;">
+                    <label>Total Fiscal Confirmado:</label>
+                    <strong id="btFaturadaResultado">0.00 €</strong>
+                </div>
+            </div>
+        </div>
+
+        <div class="auditoria-section">
+            <h2>6. Resultado da Auditoria e Discrepância</h2>
+            <div class="input-group">
+                <label>Motoristas Ativos no Mercado (Média):</label>
+                <input type="number" id="motoristasAtivos" value="38638">
+            </div>
+
+            <div class="discrepancy">
+                <span id="discrepanciaResultado">0.00 €</span>
+            </div>
+
             <div class="result-group">
-                <label>BTOR (Base Tributável Operacional Retida):</label>
-                <strong id="btorResultado">0.00 €</strong>
+                <label>IVA (6%) Omitido na Amostra:</label>
+                <strong id="ivaPotencialResultado">0.00 €</strong>
             </div>
+
+            <p>Projeção de Omissão para <span id="motoristasAtivosContexto">38.638</span> motoristas:</p>
+            <p>Mensal: <strong id="valorOmitidoMensal">0,00 €</strong></p>
+            <p>Anual: <strong id="valorOmitidoAnual">0,00 €</strong></p>
         </div>
 
-        <div class="column">
-            <h3>Dados Fiscais (Fatura)</h3>
-            <div class="input-group">
-                <label>Valor da Comissão em Fatura (Base) (€):</label>
-                <input type="text" id="btfInput" class="calc-trigger" value="0.00">
-            </div>
-            <div class="result-group" style="background-color: #fffbe6; border-left-color: #f0ad4e;">
-                <label>BTF (Base Tributável Faturada):</label>
-                <strong id="btfResultado">0.00 €</strong>
-            </div>
-        </div>
-    </div>
-
-    <div class="auditoria-section">
-        <h2>Conclusão da Auditoria</h2>
-        <div class="grid-row">
-            <div class="input-group">
-                <label>Motoristas Ativos (Universo):</label>
-                <input type="text" id="motoristasUniverso" value="38638">
-            </div>
+        <div class="auth-section">
+            <p>Elaborado por: <span id="autorPrint"></span></p>
+            <input type="text" id="autor" value="Eduardo - Perito Auditor">
+            <div class="signature-box"></div>
+            <p>Assinatura Digital / Carimbo Pericial</p>
         </div>
 
-        <div class="discrepancy-box">
-            <small>DISCREPÂNCIA (VALOR OMITIDO NA BASE):</small><br>
-            <span id="discrepanciaValor">0.00 €</span>
-        </div>
-
-        <div class="grid-row">
-            <div class="result-group" style="flex:1;">
-                <label>IVA Potencial Omitido (6%):</label>
-                <strong id="ivaOmitido">0.00 €</strong>
-            </div>
-            <div class="result-group" style="flex:1;">
-                <label>% Desvio Operacional:</label>
-                <strong id="percentualDesvio">0.00 %</strong>
-            </div>
-        </div>
-
-        <div style="margin-top: 20px; font-weight: bold;">
-            <p>Impacto Mensal Estimado (Mercado): <span id="impactoMensal">0.00 €</span></p>
-            <p>Impacto Anual Estimado (Mercado): <span id="impactoAnual">0.00 €</span></p>
+        <div class="button-container">
+            <button class="action-button calculate" onclick="executarCalculos()">Atualizar Cálculos</button>
+            <button class="action-button" onclick="window.print()">Gerar PDF Pericial</button>
         </div>
     </div>
 
-    <div class="button-container">
-        <button class="btn btn-calc" id="btnCalcular">Executar Auditoria</button>
-        <button class="btn btn-print" onclick="window.print()">Gerar PDF Legal</button>
-    </div>
-</div>
+    <script>
+        const IVA_TAXA = 0.06;
+        const MESES_ANO = 12;
 
-<script src="script.js"></script>
+        function formatCurrency(v) {
+            return v.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
+        }
+
+        function executarCalculos() {
+            // 1. Obter Valores
+            const comissao = parseFloat(document.getElementById('comissaoPlataformaOperacionais').value) || 0;
+            const taxasRes = parseFloat(document.getElementById('taxasReservaDeducoes').value) || 0;
+            const btf = parseFloat(document.getElementById('baseTributavelFaturada').value) || 0;
+            const motoristas = parseFloat(document.getElementById('motoristasAtivos').value) || 0;
+            const ganhosLiq = parseFloat(document.getElementById('ganhosLiquidosInput').value) || 0;
+
+            // 2. BTOR (Base Tributável Operacional Retida)
+            const btor = comissao + taxasRes;
+            document.getElementById('btOperacionalResultado').innerText = formatCurrency(btor);
+            document.getElementById('baseTributavelOperacional').value = btor;
+
+            // 3. Discrepância
+            const discrepancia = btor - btf;
+            const omissaoPositiva = Math.max(0, discrepancia);
+            
+            document.getElementById('discrepanciaResultado').innerText = formatCurrency(discrepancia);
+            document.getElementById('btFaturadaResultado').innerText = formatCurrency(btf);
+            document.getElementById('ivaPotencialResultado').innerText = formatCurrency(omissaoPositiva * IVA_TAXA);
+
+            // 4. Projeção de Mercado
+            const totalMensal = omissaoPositiva * motoristas;
+            const totalAnual = totalMensal * MESES_ANO;
+
+            document.getElementById('motoristasAtivosContexto').innerText = motoristas.toLocaleString('pt-PT');
+            document.getElementById('valorOmitidoMensal').innerText = formatCurrency(totalMensal);
+            document.getElementById('valorOmitidoAnual').innerText = formatCurrency(totalAnual);
+
+            // 5. Espelhamento para Impressão e Nome do Ficheiro
+            atualizarTextosEFilename();
+        }
+
+        function atualizarTextosEFilename() {
+            const IDs = ['nomeEmpresa', 'nifEmpresa', 'idProcesso', 'mes', 'ano', 'autor', 'hashOriginal', 'ganhosLiquidosInput'];
+            IDs.forEach(id => {
+                const val = document.getElementById(id).value;
+                const printId = id.replace('Input', '') + 'Print';
+                if(document.getElementById(printId)) document.getElementById(printId).innerText = val;
+            });
+
+            const fAno = document.getElementById('ano').value || '2025';
+            const fMes = (document.getElementById('mes').value || 'MM').toUpperCase();
+            const fPlat = document.getElementById('nomeEmpresa').value;
+            const fId = (document.getElementById('idProcesso').value || 'ID').toUpperCase();
+
+            document.getElementById('filenameTitle').innerText = `NOME DO FICHEIRO: ${fAno}_${fMes}_${fPlat}_${fId}_ANALISE.pdf`;
+        }
+
+        // Listeners automáticos
+        document.addEventListener('DOMContentLoaded', () => {
+            const todosInputs = document.querySelectorAll('input, select');
+            todosInputs.forEach(input => {
+                input.addEventListener('input', executarCalculos);
+            });
+            executarCalculos(); // Cálculo inicial
+        });
+    </script>
 </body>
 </html>
