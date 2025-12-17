@@ -1,89 +1,143 @@
 /**
- * MOTOR DE AUDITORIA FISCAL - Eduardo
- * Versão: 2.0 (Blindada)
+ * Auditoria Fiscal TVDE - Motor de Cálculo e Autenticação
+ * Autor: Eduardo (Metodologia VDC)
  */
 
-document.addEventListener('DOMContentLoaded', () => {
-    const inputs = document.querySelectorAll('input, select');
-    const btnCalc = document.getElementById('btnCalcular');
+const IVA_TAXA = 0.06;
+const MESES_ANO = 12;
 
-    // Função para limpar e converter números (Lida com vírgulas e pontos)
-    function parseValue(id) {
-        const el = document.getElementById(id);
-        if (!el) return 0;
-        let val = el.value.toString().replace(/\s/g, '').replace(',', '.');
-        return parseFloat(val) || 0;
+/**
+ * Formata valores para a moeda local (EUR)
+ */
+function formatCurrency(value) {
+    return value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
+}
+
+/**
+ * Atualiza o nome do ficheiro sugerido no cabeçalho
+ */
+function updateFilenameTitle() {
+    const ano = document.getElementById('ano').value || 'AAAA';
+    const mes = (document.getElementById('mes').value || 'MM').toUpperCase();
+    const plataforma = document.getElementById('nomeEmpresa').value || 'PLATAFORMA';
+    const idProcesso = (document.getElementById('idProcesso').value || 'ID').toUpperCase();
+
+    const filenameElement = document.getElementById('filenameTitle');
+    if (filenameElement) {
+        filenameElement.innerText = `NOME DO FICHEIRO: ${ano}_${mes}_${plataforma}_${idProcesso}_ANALISE.pdf`;
     }
+}
 
-    // Função para formatar Moeda (Padrão PT-PT)
-    function formatEuro(val) {
-        return val.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
-    }
+/**
+ * Executa toda a cascata de cálculos periciais
+ */
+function executarCalculos() {
+    // 1. Inputs da Coluna 4 (Operacional)
+    const comissaoRetida = parseFloat(document.getElementById('comissaoPlataformaOperacionais').value) || 0;
+    const taxasReservaDed = parseFloat(document.getElementById('taxasReservaDeducoes').value) || 0;
+    const ganhosLiquidos = parseFloat(document.getElementById('ganhosLiquidosInput').value) || 0;
 
-    function executarCalculos() {
-        // 1. Obter valores das entradas
-        const comissaoRetida = parseValue('comissaoRetida');
-        const taxasDeducoes = parseValue('taxasDeducoes');
-        const btf = parseValue('btfInput');
-        const motoristas = parseValue('motoristasUniverso');
+    // 2. Cálculo da Base Tributável Operacional Retida (BTOR)
+    const btor = comissaoRetida + taxasReservaDed;
+    
+    // Atualiza interface da Coluna 4
+    document.getElementById('btOperacionalResultado').textContent = formatCurrency(btor);
+    document.getElementById('baseTributavelOperacional').value = btor; // Hidden field para ponte
+    document.getElementById('btorFinal').textContent = formatCurrency(btor);
+    document.getElementById('ganhosLiquidosPrint').textContent = formatCurrency(ganhosLiquidos);
 
-        // 2. Lógica de Auditoria
-        // BTOR = O que a plataforma efetivamente tirou ao motorista
-        const btor = comissaoRetida + taxasDeducoes;
-        
-        // Discrepância = O que foi retido vs O que foi faturado
-        const discrepancia = btor - btf;
-        const percentual = btor > 0 ? (discrepancia / btor) * 100 : 0;
-        const ivaOmitido = Math.max(0, discrepancia) * 0.06;
+    // 3. Inputs da Coluna 5 (Fiscal)
+    const btf = parseFloat(document.getElementById('baseTributavelFaturada').value) || 0;
+    document.getElementById('btFaturadaResultado').textContent = formatCurrency(btf);
+    document.getElementById('btfFinal').textContent = formatCurrency(btf);
 
-        // Projeção de Mercado
-        const impactoMensal = discrepancia * motoristas;
-        const impactoAnual = impactoMensal * 12;
+    // 4. Cálculo da Discrepância (Omissão)
+    const discrepancia = btor - btf;
+    const omissaoEfetiva = Math.max(0, discrepancia);
+    
+    const discElement = document.getElementById('discrepanciaResultado');
+    discElement.textContent = formatCurrency(discrepancia);
+    
+    // Alerta visual se houver omissão
+    discElement.style.color = discrepancia > 0 ? "#d9534f" : "#28a745";
 
-        // 3. Atualizar Interface (Resultados Visíveis)
-        document.getElementById('btorResultado').innerText = formatEuro(btor);
-        document.getElementById('btfResultado').innerText = formatEuro(btf);
-        document.getElementById('discrepanciaValor').innerText = formatEuro(discrepancia);
-        document.getElementById('ivaOmitido').innerText = formatEuro(ivaOmitido);
-        document.getElementById('percentualDesvio').innerText = percentual.toFixed(2) + ' %';
-        
-        document.getElementById('impactoMensal').innerText = formatEuro(impactoMensal);
-        document.getElementById('impactoAnual').innerText = formatEuro(impactoAnual);
+    // 5. Percentagem e IVA
+    let percentagem = 0;
+    if (btor > 0) percentagem = (discrepancia / btor) * 100;
+    document.getElementById('percentagemOmissao').textContent = percentagem.toFixed(2) + ' %';
+    
+    const ivaOmitido = omissaoEfetiva * IVA_TAXA;
+    document.getElementById('ivaPotencialResultado').textContent = formatCurrency(ivaOmitido);
 
-        // 4. Sincronizar Spans de Impressão (Espelhamento)
-        inputs.forEach(input => {
-            const printSpan = document.getElementById(input.id + 'Print');
-            if (printSpan) {
-                if (input.tagName === 'SELECT') {
-                    printSpan.innerText = input.options[input.selectedIndex].text;
-                } else {
-                    printSpan.innerText = input.value;
-                }
+    // 6. Projeção de Mercado
+    const motoristasAtivos = parseFloat(document.getElementById('motoristasAtivos').value) || 0;
+    const omissaoMensalMercado = omissaoEfetiva * motoristasAtivos;
+    const omissaoAnualMercado = omissaoMensalMercado * MESES_ANO;
+
+    document.getElementById('motoristasAtivosContexto').textContent = motoristasAtivos.toLocaleString('pt-PT');
+    document.getElementById('omissaoPorMotorista').textContent = formatCurrency(omissaoEfetiva);
+    document.getElementById('valorOmitidoMensal').textContent = formatCurrency(omissaoMensalMercado);
+    document.getElementById('valorOmitidoAnual').textContent = formatCurrency(omissaoAnualMercado);
+
+    // 7. Sincronizar campos de texto para o modo de impressão (Spans)
+    syncPrintSpans();
+    updateFilenameTitle();
+}
+
+/**
+ * Sincroniza o conteúdo dos inputs com os spans de impressão
+ */
+function syncPrintSpans() {
+    const fields = [
+        'nomeEmpresa', 'nifEmpresa', 'idProcesso', 'mes', 'ano', 
+        'autor', 'itemAuditado', 'hashOriginal', 'dataEmissao', 'dataRecolha'
+    ];
+
+    fields.forEach(id => {
+        const input = document.getElementById(id);
+        const span = document.getElementById(id + 'Print');
+        if (input && span) {
+            if (input.type === 'datetime-local' && input.value) {
+                span.innerText = input.value.replace('T', ' ');
+            } else {
+                span.innerText = input.value;
             }
-        });
+        }
+    });
+    
+    // Especial para o nome no rodapé
+    const autorAssinatura = document.getElementById('autorAssinatura');
+    if (autorAssinatura) autorAssinatura.innerText = document.getElementById('autor').value;
+}
 
-        // 5. Nome do Ficheiro Dinâmico
-        const ano = document.getElementById('ano').value || '2025';
-        const mes = document.getElementById('mes').value || 'MES';
-        const plat = document.getElementById('nomeEmpresa').value;
-        const idProc = document.getElementById('idProcesso').value || 'ID';
-        
-        const fileName = `${ano}_${mes}_${plat}_${idProc}_ANALISE`.toUpperCase();
-        document.getElementById('filenameTitle').innerText = "NOME DO FICHEIRO: " + fileName + ".pdf";
+/**
+ * Inicialização e Listeners
+ */
+document.addEventListener('DOMContentLoaded', () => {
+    // 1. Configurar datas iniciais
+    const now = new Date();
+    const dataEmissao = document.getElementById('dataEmissao');
+    if (dataEmissao) dataEmissao.value = now.toISOString().split('T')[0];
+
+    const dataRecolha = document.getElementById('dataRecolha');
+    if (dataRecolha) {
+        const localNow = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+        dataRecolha.value = localNow;
     }
 
-    // Eventos: Calcular ao digitar ou ao clicar no botão
-    inputs.forEach(input => {
-        input.addEventListener('input', executarCalculos);
+    // 2. Adicionar Event Listeners em todos os inputs e selects para cálculo automático
+    const todosInputs = document.querySelectorAll('input, select');
+    todosInputs.forEach(el => {
+        el.addEventListener('input', executarCalculos);
     });
 
-    if (btnCalc) {
-        btnCalc.addEventListener('click', (e) => {
-            e.preventDefault();
-            executarCalculos();
-        });
-    }
+    // 3. Configurar botões
+    document.getElementById('calculateButton').addEventListener('click', executarCalculos);
+    document.getElementById('printButton').addEventListener('click', () => {
+        executarCalculos();
+        window.print();
+    });
 
-    // Inicialização
+    // 4. Cálculo inicial
     executarCalculos();
 });
