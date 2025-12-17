@@ -1,6 +1,7 @@
 /**
  * Auditoria Fiscal TVDE - Motor de Cálculo e Autenticação
  * Autor: Eduardo (Metodologia VDC)
+ * CORREÇÃO V2: Garantir que os cálculos são executados em todos os inputs.
  */
 
 const IVA_TAXA = 0.06;
@@ -10,7 +11,6 @@ const MESES_ANO = 12;
  * Formata valores para a moeda local (EUR)
  */
 function formatCurrency(value) {
-    // Garante que o valor é tratado como um número antes da formatação
     if (isNaN(value) || value === null) {
         value = 0;
     }
@@ -37,6 +37,7 @@ function updateFilenameTitle() {
  */
 function executarCalculos() {
     // 1. Inputs da Coluna 4 (Operacional)
+    // Usamos parseFloat e fallback para 0 para evitar NaN
     const comissaoRetida = parseFloat(document.getElementById('comissaoPlataformaOperacionais').value) || 0;
     const taxasReservaDed = parseFloat(document.getElementById('taxasReservaDeducoes').value) || 0;
     const ganhosLiquidos = parseFloat(document.getElementById('ganhosLiquidosInput').value) || 0;
@@ -46,7 +47,7 @@ function executarCalculos() {
     
     // Atualiza interface da Coluna 4
     document.getElementById('btOperacionalResultado').textContent = formatCurrency(btor);
-    document.getElementById('baseTributavelOperacional').value = btor; // Hidden field para ponte
+    document.getElementById('baseTributavelOperacional').value = btor;
     document.getElementById('btorFinal').textContent = formatCurrency(btor);
     document.getElementById('ganhosLiquidosPrint').textContent = formatCurrency(ganhosLiquidos);
 
@@ -78,6 +79,10 @@ function executarCalculos() {
     const omissaoMensalMercado = omissaoEfetiva * motoristasAtivos;
     const omissaoAnualMercado = omissaoMensalMercado * MESES_ANO;
 
+    // Atualiza os inputs de contexto (viaturas/motoristas)
+    const viaturasAtivas = parseFloat(document.getElementById('viaturasAtivas').value) || 0;
+    document.getElementById('viaturasAtivas').value = viaturasAtivas; // Apenas para garantir que o input é tratado como número
+    
     document.getElementById('motoristasAtivosContexto').textContent = motoristasAtivos.toLocaleString('pt-PT');
     document.getElementById('omissaoPorMotorista').textContent = formatCurrency(omissaoEfetiva);
     document.getElementById('valorOmitidoMensal').textContent = formatCurrency(omissaoMensalMercado);
@@ -98,10 +103,18 @@ function syncPrintSpans() {
         'autor', 'dataEmissao'
     ];
     
-    // CAMPOS DE CADEIA DE CUSTÓDIA ADICIONADOS
+    // CAMPOS DE CADEIA DE CUSTÓDIA
     const custodyFields = [
         'chaveUnicaItem', 'dataHoraRecolha', 'hashSha256'
     ];
+    
+    // CAMPOS NUMÉRICOS (Operacional / Projeção)
+    const numericFields = [
+        'ganhosBrutos', 'pagamentosApp', 'campanhas', 'taxasCancelamento', 'gorjetasOperacionais', 
+        'portagensOperacionais', 'taxasReservaOperacionaisBruto', 'taxasReservaDeducoes', 
+        'comissaoPlataformaOperacionais', 'baseTributavelFaturada', 'viaturasAtivas', 'motoristasAtivos'
+    ];
+
 
     fields.concat(custodyFields).forEach(id => {
         const input = document.getElementById(id);
@@ -115,6 +128,15 @@ function syncPrintSpans() {
         }
     });
     
+    // Sincronizar SELECTs (para impressão)
+    ['nomeEmpresa', 'iva6', 'reverseCharge'].forEach(id => {
+        const select = document.getElementById(id);
+        const span = document.getElementById(id + 'Print');
+        if (select && span) {
+            span.innerText = select.value;
+        }
+    });
+
     // Especial para o nome no rodapé
     const autorAssinatura = document.getElementById('autorAssinatura');
     if (autorAssinatura) autorAssinatura.innerText = document.getElementById('autor').value;
@@ -129,17 +151,33 @@ document.addEventListener('DOMContentLoaded', () => {
     const dataEmissao = document.getElementById('dataEmissao');
     if (dataEmissao) dataEmissao.value = now.toISOString().split('T')[0];
 
-    // Os campos de Custódia (chaveUnicaItem, dataHoraRecolha, hashSha256)
-    // NÃO DEVEM ser preenchidos por JavaScript de frontend.
-    // Eles devem ser preenchidos pelo BACKEND (PHP no VPS KVM 1) ou manualmente pelo auditor,
-    // garantindo que o valor reflete a autenticação do servidor.
-
     // 2. Adicionar Event Listeners em todos os inputs e selects para cálculo automático
-    const todosInputs = document.querySelectorAll('input, select');
-    todosInputs.forEach(el => {
-        el.addEventListener('input', executarCalculos);
+    // Selecionamos APENAS os inputs que realmente causam uma alteração no cálculo.
+    const inputsToListen = [
+        // Ganhos Operacionais
+        'ganhosBrutos', 'pagamentosApp', 'campanhas', 'taxasCancelamento', 'gorjetasOperacionais', 
+        'portagensOperacionais', 'taxasReservaOperacionaisBruto', 'taxasReservaDeducoes', 
+        'comissaoPlataformaOperacionais', 'ganhosLiquidosInput',
+        // Fatura Fiscal
+        'baseTributavelFaturada',
+        // Projeção
+        'viaturasAtivas', 'motoristasAtivos',
+        // Cabeçalho (para o nome do ficheiro)
+        'ano', 'mes', 'idProcesso', 'nomeEmpresa'
+    ];
+    
+    inputsToListen.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) {
+            el.addEventListener('input', executarCalculos);
+        }
     });
-
+    
+    // Adicionar listener aos selects que afetam o cálculo
+    document.getElementById('iva6').addEventListener('change', executarCalculos);
+    document.getElementById('reverseCharge').addEventListener('change', executarCalculos);
+    document.getElementById('nomeEmpresa').addEventListener('change', executarCalculos);
+    
     // 3. Configurar botões
     document.getElementById('calculateButton').addEventListener('click', executarCalculos);
     document.getElementById('printButton').addEventListener('click', () => {
