@@ -10,6 +10,10 @@ const MESES_ANO = 12;
  * Formata valores para a moeda local (EUR)
  */
 function formatCurrency(value) {
+    // Garante que o valor é tratado como um número antes da formatação
+    if (isNaN(value) || value === null) {
+        value = 0;
+    }
     return value.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
 }
 
@@ -85,23 +89,29 @@ function executarCalculos() {
 }
 
 /**
- * Sincroniza o conteúdo dos inputs com os spans de impressão
+ * Sincroniza o conteúdo dos inputs com os spans de impressão, incluindo a Custódia
  */
 function syncPrintSpans() {
+    // Campos principais
     const fields = [
         'nomeEmpresa', 'nifEmpresa', 'idProcesso', 'mes', 'ano', 
-        'autor', 'itemAuditado', 'hashOriginal', 'dataEmissao', 'dataRecolha'
+        'autor', 'dataEmissao'
+    ];
+    
+    // CAMPOS DE CADEIA DE CUSTÓDIA ADICIONADOS
+    const custodyFields = [
+        'chaveUnicaItem', 'dataHoraRecolha', 'hashSha256'
     ];
 
-    fields.forEach(id => {
+    fields.concat(custodyFields).forEach(id => {
         const input = document.getElementById(id);
         const span = document.getElementById(id + 'Print');
         if (input && span) {
-            if (input.type === 'datetime-local' && input.value) {
-                span.innerText = input.value.replace('T', ' ');
-            } else {
-                span.innerText = input.value;
+            // Se for o campo da HASH, garantimos quebra de linha para impressão
+            if (id === 'hashSha256') {
+                span.style.wordBreak = 'break-all'; 
             }
+            span.innerText = input.value;
         }
     });
     
@@ -114,16 +124,15 @@ function syncPrintSpans() {
  * Inicialização e Listeners
  */
 document.addEventListener('DOMContentLoaded', () => {
-    // 1. Configurar datas iniciais
+    // 1. Configurar datas iniciais (Apenas para o frontend/relatório de análise)
     const now = new Date();
     const dataEmissao = document.getElementById('dataEmissao');
     if (dataEmissao) dataEmissao.value = now.toISOString().split('T')[0];
 
-    const dataRecolha = document.getElementById('dataRecolha');
-    if (dataRecolha) {
-        const localNow = new Date(now.getTime() - (now.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
-        dataRecolha.value = localNow;
-    }
+    // Os campos de Custódia (chaveUnicaItem, dataHoraRecolha, hashSha256)
+    // NÃO DEVEM ser preenchidos por JavaScript de frontend.
+    // Eles devem ser preenchidos pelo BACKEND (PHP no VPS KVM 1) ou manualmente pelo auditor,
+    // garantindo que o valor reflete a autenticação do servidor.
 
     // 2. Adicionar Event Listeners em todos os inputs e selects para cálculo automático
     const todosInputs = document.querySelectorAll('input, select');
