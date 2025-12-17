@@ -1,121 +1,89 @@
-// Constantes de Auditoria
-const IVA_TAXA = 0.06;
-const MESES_ANO = 12;
-
 /**
- * Função para converter string de input em número decimal puro
- * Resolve o problema da vírgula (,) vs ponto (.)
+ * MOTOR DE AUDITORIA FISCAL - Eduardo
+ * Versão: 2.0 (Blindada)
  */
-function parseInput(value) {
-    if (!value) return 0;
-    // Substitui vírgula por ponto e remove carateres não numéricos exceto o ponto
-    let cleanValue = value.toString().replace(',', '.');
-    return parseFloat(cleanValue) || 0;
-}
 
-/**
- * Formatação de Moeda (Padrão Contabilístico Português)
- */
-function formatCurrency(value, allowNegative = false) {
-    const finalValue = allowNegative ? value : Math.max(0, value);
-    return finalValue.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
-}
-
-/**
- * MOTOR DE CÁLCULO - Executa a cascata de auditoria
- */
-function executarAuditoria() {
-    // 1. CAPTURA DE DADOS (OPERACIONAL)
-    const taxasReservaDeducoes = parseInput(document.getElementById('taxasReservaDeducoes').value);
-    const comissaoRetida = parseInput(document.getElementById('comissaoPlataformaOperacionais').value);
-    const ganhosLiquidos = parseInput(document.getElementById('ganhosLiquidosInput').value);
-
-    // 2. CÁLCULO DA BTOR (Base Tributável Operacional Retida)
-    // Fórmula: O que a plataforma reteve na fonte (Comissão + Taxas)
-    const btor = comissaoRetida + taxasReservaDeducoes;
-
-    // 3. CAPTURA DE DADOS (FISCAL)
-    const btf = parseInput(document.getElementById('baseTributavelFaturada').value);
-
-    // 4. CÁLCULO DA DISCREPÂNCIA (Omissão)
-    const discrepancia = btor - btf;
-    const omissaoPositiva = Math.max(0, discrepancia);
-    const percentagemOmissao = btor !== 0 ? (discrepancia / btor) * 100 : 0;
-
-    // 5. PROJEÇÃO DE MERCADO
-    const motoristasAtivos = parseInput(document.getElementById('motoristasAtivos').value) || 38638;
-    const ivaOmitido = omissaoPositiva * IVA_TAXA;
-    const valorOmitidoMensal = omissaoPositiva * motoristasAtivos;
-    const valorOmitidoAnual = valorOmitidoMensal * MESES_ANO;
-
-    // --- ATUALIZAÇÃO DA INTERFACE (DOM) ---
-
-    // Coluna 4 - Resultados Operacionais
-    document.getElementById('btOperacionalResultado').innerText = formatCurrency(btor);
-    document.getElementById('baseTributavelOperacional').value = btor; // Hidden Field
-    document.getElementById('ganhosLiquidosPrint').innerText = formatCurrency(ganhosLiquidos);
-
-    // Coluna 5 - Resultado Fiscal
-    document.getElementById('btFaturadaResultado').innerText = formatCurrency(btf);
-
-    // Secção 6 - Resumo Final
-    document.getElementById('btorFinal').innerText = formatCurrency(btor);
-    document.getElementById('btfFinal').innerText = formatCurrency(btf);
-    document.getElementById('discrepanciaResultado').innerText = formatCurrency(discrepancia, true);
-    document.getElementById('percentagemOmissao').innerText = percentagemOmissao.toFixed(2) + ' %';
-    document.getElementById('ivaPotencialResultado').innerText = formatCurrency(ivaOmitido);
-    
-    // Contexto de Mercado
-    document.getElementById('motoristasAtivosContexto').innerText = motoristasAtivos.toLocaleString('pt-PT');
-    document.getElementById('omissaoPorMotorista').innerText = formatCurrency(omissaoPositiva);
-    document.getElementById('valorOmitidoMensal').innerText = formatCurrency(valorOmitidoMensal);
-    document.getElementById('valorOmitidoAnual').innerText = formatCurrency(valorOmitidoAnual);
-
-    // Atualizar Nome do Ficheiro
-    atualizarNomeFicheiro();
-}
-
-/**
- * Atualiza o cabeçalho dinâmico do relatório
- */
-function atualizarNomeFicheiro() {
-    const ano = document.getElementById('ano').value || 'AAAA';
-    const mes = document.getElementById('mes').value || 'MM';
-    const plataforma = document.getElementById('nomeEmpresa').value || 'PLATAFORMA';
-    const id = document.getElementById('idProcesso').value || 'ID';
-    
-    document.getElementById('filenameTitle').innerText = `NOME DO FICHEIRO: ${ano}_${mes}_${plataforma}_${id}_ANALISE.pdf`;
-}
-
-/**
- * INICIALIZAÇÃO E LISTENERS
- */
 document.addEventListener('DOMContentLoaded', () => {
-    // Seleciona todos os elementos de input e select
     const inputs = document.querySelectorAll('input, select');
-    
-    inputs.forEach(input => {
-        // Escuta qualquer mudança ou digitação
-        input.addEventListener('input', executarAuditoria);
+    const btnCalc = document.getElementById('btnCalcular');
+
+    // Função para limpar e converter números (Lida com vírgulas e pontos)
+    function parseValue(id) {
+        const el = document.getElementById(id);
+        if (!el) return 0;
+        let val = el.value.toString().replace(/\s/g, '').replace(',', '.');
+        return parseFloat(val) || 0;
+    }
+
+    // Função para formatar Moeda (Padrão PT-PT)
+    function formatEuro(val) {
+        return val.toLocaleString('pt-PT', { style: 'currency', currency: 'EUR' });
+    }
+
+    function executarCalculos() {
+        // 1. Obter valores das entradas
+        const comissaoRetida = parseValue('comissaoRetida');
+        const taxasDeducoes = parseValue('taxasDeducoes');
+        const btf = parseValue('btfInput');
+        const motoristas = parseValue('motoristasUniverso');
+
+        // 2. Lógica de Auditoria
+        // BTOR = O que a plataforma efetivamente tirou ao motorista
+        const btor = comissaoRetida + taxasDeducoes;
         
-        // Espelhamento para spans de impressão
-        const spanId = input.id + 'Print';
-        const span = document.getElementById(spanId);
-        if (span) {
-            input.addEventListener('input', () => {
-                span.innerText = input.tagName === 'SELECT' ? input.options[input.selectedIndex].text : input.value;
-            });
-        }
+        // Discrepância = O que foi retido vs O que foi faturado
+        const discrepancia = btor - btf;
+        const percentual = btor > 0 ? (discrepancia / btor) * 100 : 0;
+        const ivaOmitido = Math.max(0, discrepancia) * 0.06;
+
+        // Projeção de Mercado
+        const impactoMensal = discrepancia * motoristas;
+        const impactoAnual = impactoMensal * 12;
+
+        // 3. Atualizar Interface (Resultados Visíveis)
+        document.getElementById('btorResultado').innerText = formatEuro(btor);
+        document.getElementById('btfResultado').innerText = formatEuro(btf);
+        document.getElementById('discrepanciaValor').innerText = formatEuro(discrepancia);
+        document.getElementById('ivaOmitido').innerText = formatEuro(ivaOmitido);
+        document.getElementById('percentualDesvio').innerText = percentual.toFixed(2) + ' %';
+        
+        document.getElementById('impactoMensal').innerText = formatEuro(impactoMensal);
+        document.getElementById('impactoAnual').innerText = formatEuro(impactoAnual);
+
+        // 4. Sincronizar Spans de Impressão (Espelhamento)
+        inputs.forEach(input => {
+            const printSpan = document.getElementById(input.id + 'Print');
+            if (printSpan) {
+                if (input.tagName === 'SELECT') {
+                    printSpan.innerText = input.options[input.selectedIndex].text;
+                } else {
+                    printSpan.innerText = input.value;
+                }
+            }
+        });
+
+        // 5. Nome do Ficheiro Dinâmico
+        const ano = document.getElementById('ano').value || '2025';
+        const mes = document.getElementById('mes').value || 'MES';
+        const plat = document.getElementById('nomeEmpresa').value;
+        const idProc = document.getElementById('idProcesso').value || 'ID';
+        
+        const fileName = `${ano}_${mes}_${plat}_${idProc}_ANALISE`.toUpperCase();
+        document.getElementById('filenameTitle').innerText = "NOME DO FICHEIRO: " + fileName + ".pdf";
+    }
+
+    // Eventos: Calcular ao digitar ou ao clicar no botão
+    inputs.forEach(input => {
+        input.addEventListener('input', executarCalculos);
     });
 
-    // Botão Calcular (Backup manual)
-    const btnCalc = document.getElementById('calculateButton');
-    if (btnCalc) btnCalc.addEventListener('click', executarAuditoria);
+    if (btnCalc) {
+        btnCalc.addEventListener('click', (e) => {
+            e.preventDefault();
+            executarCalculos();
+        });
+    }
 
-    // Botão Imprimir
-    const btnPrint = document.getElementById('printButton');
-    if (btnPrint) btnPrint.addEventListener('click', () => window.print());
-
-    // Executa o cálculo inicial
-    executarAuditoria();
+    // Inicialização
+    executarCalculos();
 });
